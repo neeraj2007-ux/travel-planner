@@ -310,7 +310,6 @@ git subtree push --prefix frontend origin gh-pages
 - [ ] Payment gateway integration
 - [ ] Mobile app (React Native)
 - [ ] Multi-language support
-- [ ] Offline mode
 
 ## 👥 Contributing
 
