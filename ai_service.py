@@ -6,38 +6,27 @@ import re
 
 class AIService:
     def __init__(self):
-        # Configure Gemini API
         if Config.GEMINI_API_KEY:
             genai.configure(api_key=Config.GEMINI_API_KEY)
-            # FIXED: Changed model to 1.5-flash (2.5 does not exist publicly yet)
-            self.model = genai.GenerativeModel('models/gemini-1.5-flash')
+            # FIXED: Correct model name for 2025
+            self.model = genai.GenerativeModel('models/gemini-2.5-flash')
         self.maps_api_key = Config.GOOGLE_MAPS_API_KEY
     
-    def generate_itinerary(self, destination, budget, members, days, from_location, accommodation, interests):
+    def generate_itinerary(self, destination, budget, members, days, from_loc, accommodation, interests):
         try:
-            per_person_budget = budget / members
-            distance_km = self._get_distance(from_location, destination)
-            
             prompt = f"""
-            Act as an expert travel planner. Create a {days}-day itinerary for {destination} from {from_location}.
-            Budget: ₹{budget} total ({members} people).
-            Interests: {interests}.
-            Accommodation: {accommodation}.
+            Plan a {days}-day trip to {destination} from {from_loc}.
+            Budget: ₹{budget} total for {members} people.
+            Interests: {interests}. Stay: {accommodation}.
 
-            Return ONLY valid JSON format with this structure:
+            Return JSON ONLY:
             {{
                 "itinerary": [
                     {{
                         "day": 1,
                         "title": "Day Title",
                         "activities": [
-                            {{
-                                "time": "10:00 AM",
-                                "activity": "Activity Name",
-                                "cost": 0,
-                                "description": "Details",
-                                "tips": "Tip"
-                            }}
+                            {{ "time": "10am", "activity": "Name", "cost": 500, "description": "desc", "tips": "tip" }}
                         ]
                     }}
                 ],
@@ -45,44 +34,24 @@ class AIService:
                 "estimated_costs": {{ "transportation": 0, "accommodation": 0, "food": 0, "activities": 0, "miscellaneous": 0 }}
             }}
             """
-
+            
             response = self.model.generate_content(prompt)
-            return {'success': True, 'itinerary': self._clean_json(response.text)}
-        
-        except Exception as e:
-            print(f"AI Error: {str(e)}")
-            return self._generate_basic_itinerary(destination, days, budget, members)
-
-    def _clean_json(self, text):
-        """Robust JSON extraction from AI response"""
-        try:
-            # Remove Markdown code blocks
+            # Robust JSON cleaning
+            text = response.text
             match = re.search(r'```(?:json)?\s*(.*?)\s*```', text, re.DOTALL)
-            if match:
-                text = match.group(1)
-            return json.loads(text)
-        except:
-            return None
+            if match: text = match.group(1)
+            
+            return {'success': True, 'itinerary': json.loads(text)}
+        except Exception as e:
+            print(f"AI Error: {e}")
+            return self._fallback(destination, days, budget)
 
-    def _get_distance(self, origin, destination):
-        if not self.maps_api_key: return 0
-        try:
-            url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origin}&destinations={destination}&key={self.maps_api_key}"
-            response = requests.get(url)
-            data = response.json()
-            if 'rows' in data and data['rows'][0]['elements'][0]['status'] == 'OK':
-                return round(data['rows'][0]['elements'][0]['distance']['value'] / 1000, 2)
-        except:
-            pass
-        return 0
-    
-    def _generate_basic_itinerary(self, destination, days, budget, members):
-        # Fallback if AI fails
+    def _fallback(self, dest, days, budget):
         return {
-            'success': True,
+            'success': True, 
             'itinerary': {
-                'itinerary': [{'day': i, 'title': f'Explore {destination}', 'activities': [{'activity': 'Sightseeing', 'cost': 500}]} for i in range(1, days+1)],
+                'itinerary': [{'day': i, 'title': f'Visit {dest}', 'activities': [{'activity': 'Sightseeing', 'cost': 0}]} for i in range(1, days+1)],
                 'estimated_costs': {'total': budget},
-                'recommendations': {'safety_tips': ['Stay safe']}
+                'recommendations': {}
             }
         }
