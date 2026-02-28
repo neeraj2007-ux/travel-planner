@@ -16,8 +16,15 @@ function removeAuthToken() {
 }
 
 // -------------------- Trip Form Submission --------------------
-document.getElementById('tripForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+window.addEventListener('DOMContentLoaded', () => {
+    const tripForm = document.getElementById('tripForm');
+    if (tripForm) {
+        tripForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            // your form logic
+        });
+    }
+});
     
     const formData = {
         destination: document.getElementById('destination').value,
