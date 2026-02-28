@@ -1,5 +1,5 @@
 """
-Email service for sending OTP via Gmail SMTP
+Email service for sending OTP and booking notifications via Gmail SMTP
 """
 import smtplib
 from email.mime.text import MIMEText
@@ -90,7 +90,7 @@ class EmailService:
             return True
             
         except Exception as e:
-            print(f"Error sending email: {str(e)}")
+            print(f"Error sending OTP email: {str(e)}")
             return False
     
     def send_booking_confirmation(self, to_email, trip_details):
@@ -113,7 +113,7 @@ class EmailService:
             html_content = f"""
             <html>
                 <body style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
-                    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px;">
+                    <div style="max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         <h1 style="color: #667eea;">🎉 Booking Confirmed!</h1>
                         <h2>Trip to {trip_details['destination']}</h2>
                         <p><strong>Duration:</strong> {trip_details['days']} days</p>
@@ -136,8 +136,9 @@ class EmailService:
             server.send_message(msg)
             server.quit()
             
+            print(f"Booking confirmation email sent to {to_email}")
             return True
             
         except Exception as e:
-            print(f"Error sending confirmation email: {str(e)}")
+            print(f"Error sending booking confirmation email: {str(e)}")
             return False

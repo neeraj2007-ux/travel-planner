@@ -25,14 +25,14 @@ class Config:
     SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
     
     # JWT Configuration
-    JWT_EXPIRY_DAYS = 30
-    JWT_ALGORITHM = 'HS256'
+    JWT_EXPIRY_DAYS = int(os.environ.get('JWT_EXPIRY_DAYS', 7))
+    JWT_ALGORITHM = os.environ.get('JWT_ALGORITHM', 'HS256')
     
     # OTP Configuration
     OTP_EXPIRY_MINUTES = 10
     MAX_OTP_ATTEMPTS = 3
     
-    # API Keys (Add your API keys here)
+    # API Keys
     GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
     CLAUDE_API_KEY = os.environ.get('CLAUDE_API_KEY')
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
@@ -46,7 +46,8 @@ class Config:
             'GMAIL_PASSWORD',
             'SUPABASE_URL',
             'SUPABASE_KEY',
-            'SECRET_KEY'
+            'SECRET_KEY',
+            'GOOGLE_MAPS_API_KEY'
         ]
         
         missing = []

@@ -17,15 +17,7 @@ class DatabaseService:
     # ============ USER OPERATIONS ============
     
     def get_user_by_email(self, email):
-        """
-        Get user by email
-        
-        Args:
-            email (str): User email
-            
-        Returns:
-            dict or None: User data if found
-        """
+        """Get user by email"""
         try:
             response = self.supabase.table('users').select('*').eq('email', email).execute()
             return response.data[0] if response.data else None
@@ -34,15 +26,7 @@ class DatabaseService:
             return None
     
     def create_user(self, email):
-        """
-        Create new user
-        
-        Args:
-            email (str): User email
-            
-        Returns:
-            dict: Created user data
-        """
+        """Create new user"""
         try:
             user_data = {
                 'email': email,
@@ -68,15 +52,7 @@ class DatabaseService:
     # ============ TRIP OPERATIONS ============
     
     def create_trip(self, trip_data):
-        """
-        Create new trip
-        
-        Args:
-            trip_data (dict): Trip information
-            
-        Returns:
-            dict: Created trip data
-        """
+        """Create new trip"""
         try:
             trip_data['created_at'] = datetime.now().isoformat()
             response = self.supabase.table('trips').insert(trip_data).execute()
@@ -86,15 +62,7 @@ class DatabaseService:
             return None
     
     def get_user_trips(self, email):
-        """
-        Get all trips for a user
-        
-        Args:
-            email (str): User email
-            
-        Returns:
-            list: List of trips
-        """
+        """Get all trips for a user"""
         try:
             response = self.supabase.table('trips')\
                 .select('*')\
@@ -107,15 +75,7 @@ class DatabaseService:
             return []
     
     def get_trip_by_id(self, trip_id):
-        """
-        Get trip by ID
-        
-        Args:
-            trip_id (int): Trip ID
-            
-        Returns:
-            dict or None: Trip data
-        """
+        """Get trip by ID"""
         try:
             response = self.supabase.table('trips').select('*').eq('id', trip_id).execute()
             return response.data[0] if response.data else None
@@ -124,16 +84,7 @@ class DatabaseService:
             return None
     
     def update_trip(self, trip_id, updates):
-        """
-        Update trip information
-        
-        Args:
-            trip_id (int): Trip ID
-            updates (dict): Fields to update
-            
-        Returns:
-            bool: Success status
-        """
+        """Update trip information"""
         try:
             updates['updated_at'] = datetime.now().isoformat()
             self.supabase.table('trips').update(updates).eq('id', trip_id).execute()
@@ -143,16 +94,7 @@ class DatabaseService:
             return False
     
     def delete_trip(self, trip_id, user_email):
-        """
-        Delete a trip
-        
-        Args:
-            trip_id (int): Trip ID
-            user_email (str): User email (for authorization)
-            
-        Returns:
-            bool: Success status
-        """
+        """Delete a trip"""
         try:
             self.supabase.table('trips')\
                 .delete()\
@@ -167,15 +109,7 @@ class DatabaseService:
     # ============ BOOKING OPERATIONS ============
     
     def create_booking(self, booking_data):
-        """
-        Create new booking
-        
-        Args:
-            booking_data (dict): Booking information
-            
-        Returns:
-            dict: Created booking data
-        """
+        """Create new booking"""
         try:
             booking_data['created_at'] = datetime.now().isoformat()
             booking_data['status'] = 'confirmed'

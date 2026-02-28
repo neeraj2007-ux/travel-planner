@@ -4,6 +4,7 @@ AI Service for Trip Itinerary Generation using Gemini API
 import google.generativeai as genai
 from config import Config
 import json
+import requests
 
 class AIService:
     """Handle AI-powered itinerary generation using Google Gemini"""
@@ -11,30 +12,20 @@ class AIService:
     def __init__(self):
         # Configure Gemini API
         genai.configure(api_key=Config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('models/gemini-2.5-flash')
+        self.maps_api_key = Config.GOOGLE_MAPS_API_KEY
     
     def generate_itinerary(self, destination, budget, members, days, from_location, accommodation, interests):
-        """
-        Generate AI-powered travel itinerary
-        
-        Args:
-            destination (str): Travel destination
-            budget (float): Total budget
-            members (int): Number of travelers
-            days (int): Trip duration
-            from_location (str): Starting location
-            accommodation (str): Accommodation preference
-            interests (str): Travel interests
-            
-        Returns:
-            dict: Generated itinerary with day-wise plans
-        """
+        """Generate AI-powered travel itinerary"""
         try:
             per_person_budget = budget / members
             
+            # Calculate distance using Google Maps
+            distance_km = self._get_distance(from_location, destination)
+            
             prompt = f"""You are an expert travel planner specializing in budget-friendly student trips.
 
-Create a detailed {days}-day itinerary for a trip to {destination}.
+Create a detailed {days}-day itinerary for a trip to {destination} starting from {from_location} ({distance_km} km away).
 
 TRIP DETAILS:
 - Destination: {destination}
@@ -98,37 +89,47 @@ Make it practical, budget-friendly, and exciting for students!"""
 
             # Generate content using Gemini
             response = self.model.generate_content(prompt)
-            
-            # Extract JSON from response
             response_text = response.text
             
-            # Clean up the response (remove markdown code blocks if present)
+            # Extract JSON from response
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0]
             elif "```" in response_text:
                 response_text = response_text.split("```")[1].split("```")[0]
             
-            # Parse JSON
             itinerary_data = json.loads(response_text.strip())
-            
-            return {
-                'success': True,
-                'itinerary': itinerary_data
-            }
-            
+            return {'success': True, 'itinerary': itinerary_data}
+        
         except json.JSONDecodeError as e:
             print(f"JSON parsing error: {str(e)}")
-            # Fallback to basic itinerary
             return self._generate_basic_itinerary(destination, days, budget, members)
         
         except Exception as e:
             print(f"Error generating itinerary: {str(e)}")
             return self._generate_basic_itinerary(destination, days, budget, members)
     
+    def _get_distance(self, origin, destination):
+        """Get distance between origin and destination using Google Maps"""
+        try:
+            url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origin}&destinations={destination}&key={self.maps_api_key}"
+            response = requests.get(url)
+            data = response.json()
+            
+            # Validate response safely
+            if 'rows' in data and len(data['rows']) > 0:
+                elements = data['rows'][0].get('elements', [])
+                if len(elements) > 0 and elements[0].get('status') == 'OK':
+                    distance_meters = elements[0]['distance']['value']
+                    return round(distance_meters / 1000, 2)
+            
+            return 0
+        except Exception as e:
+            print(f"Error fetching distance from Google Maps: {str(e)}")
+            return 0
+    
     def _generate_basic_itinerary(self, destination, days, budget, members):
         """Fallback basic itinerary if AI generation fails"""
         per_person_budget = budget / members
-        
         itinerary = []
         for day in range(1, days + 1):
             itinerary.append({
@@ -199,70 +200,3 @@ Make it practical, budget-friendly, and exciting for students!"""
                 }
             }
         }
-    
-    def get_destination_info(self, destination):
-        """
-        Get detailed information about a destination
-        
-        Args:
-            destination (str): Destination name
-            
-        Returns:
-            dict: Destination information
-        """
-        try:
-            prompt = f"""Provide a brief overview of {destination} as a travel destination.
-            
-Include:
-1. Best time to visit
-2. Top 5 attractions
-3. Average costs
-4. Local cuisine highlights
-5. Transportation options
-6. Safety information
-
-Keep it concise and student-friendly."""
-
-            response = self.model.generate_content(prompt)
-            
-            return {
-                'success': True,
-                'info': response.text
-            }
-            
-        except Exception as e:
-            print(f"Error getting destination info: {str(e)}")
-            return {
-                'success': False,
-                'info': 'Unable to fetch destination information'
-            }
-    
-    def optimize_route(self, places):
-        """
-        Optimize visiting order of multiple places
-        
-        Args:
-            places (list): List of places to visit
-            
-        Returns:
-            dict: Optimized route
-        """
-        try:
-            prompt = f"""Given these places to visit: {', '.join(places)}
-            
-Suggest the most efficient order to visit them to minimize travel time and costs.
-Provide brief reasoning for the order."""
-
-            response = self.model.generate_content(prompt)
-            
-            return {
-                'success': True,
-                'optimized_route': response.text
-            }
-            
-        except Exception as e:
-            print(f"Error optimizing route: {str(e)}")
-            return {
-                'success': False,
-                'optimized_route': places
-            }
