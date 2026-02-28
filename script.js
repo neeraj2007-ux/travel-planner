@@ -1,8 +1,6 @@
 // script.js
-import { API_BASE_URL } from './config.js';
-// main.js or inline script
-import { supabase } from './config.js';
-console.log('Backend URL:', API_BASE_URL);
+// script.js
+console.log('Backend URL:', API_BASE_URL); // works now
 // -------------------- Auth Token Helpers --------------------
 function getAuthToken() {
     return localStorage.getItem('authToken');
