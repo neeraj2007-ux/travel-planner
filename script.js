@@ -1,9 +1,8 @@
 // script.js
 import { API_BASE_URL } from './config.js';
 // main.js or inline script
-fetch(`${window.API_BASE_URL}/health`)
-  .then(res => res.json())
-  .then(data => console.log('Backend response:', data));
+import { supabase } from './config.js';
+console.log('Backend URL:', API_BASE_URL);
 // -------------------- Auth Token Helpers --------------------
 function getAuthToken() {
     return localStorage.getItem('authToken');
