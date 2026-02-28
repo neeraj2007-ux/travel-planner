@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner for Students</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">✈️ TravelBuddy</div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#planner">Plan Trip</a></li>
+                <li><a href="#destinations">Destinations</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+            <a href="#" class="login-btn" onclick="openModal()">Login</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <h1>Plan Your Dream Trip Within Budget</h1>
+        <p>Smart AI-powered travel planning for students</p>
+    </section>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Trip Planner Form -->
+        <div class="planner-card" id="planner">
+            <h2>🌍 Plan Your Budget Trip</h2>
+            <form id="tripForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="destination">Where do you want to go?</label>
+                        <input type="text" id="destination" placeholder="e.g., Goa, Paris, Bali" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="budget">Total Budget (₹)</label>
+                        <input type="number" id="budget" placeholder="e.g., 30000" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="members">Number of Travelers</label>
+                        <input type="number" id="members" min="1" placeholder="e.g., 3" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="days">Trip Duration (Days)</label>
+                        <input type="number" id="days" min="1" placeholder="e.g., 4" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="from">Starting From</label>
+                        <input type="text" id="from" placeholder="Your city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accommodation">Accommodation Type</label>
+                        <select id="accommodation" required>
+                            <option value="">Select...</option>
+                            <option value="hostel">Hostel</option>
+                            <option value="budget-hotel">Budget Hotel</option>
+                            <option value="airbnb">Airbnb</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="interests">Travel Interests</label>
+                    <select id="interests" required>
+                        <option value="">Select...</option>
+                        <option value="adventure">Adventure & Sports</option>
+                        <option value="cultural">Cultural & Historical</option>
+                        <option value="beach">Beach & Relaxation</option>
+                        <option value="nature">Nature & Wildlife</option>
+                        <option value="food">Food & Culinary</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="generate-btn">Generate Trip Plan</button>
+            </form>
+        </div>
+
+        <!-- Features Section -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Budget Optimizer</h3>
+                <p>Smart allocation across travel, stay, food & activities</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h3>AI Itinerary</h3>
+                <p>Personalized day-wise plans optimized for your budget</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎓</div>
+                <h3>Student Discounts</h3>
+                <p>Exclusive deals and offers for student travelers</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Instant Booking</h3>
+                <p>Book flights, hotels & activities in one place</p>
+            </div>
+        </div>
+
+        <!-- Popular Destinations -->
+        <div class="destinations" id="destinations">
+            <h2>Popular Student Destinations</h2>
+            <div class="destination-grid">
+                <div class="destination-card">
+                    <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400');"></div>
+                    <div class="destination-info">
+                        <h3>Goa, India</h3>
+                        <p>Beaches, nightlife & Portuguese culture</p>
+                        <span class="price-tag">From ₹8,000/person</span>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <div class="destination-img" style="background-image: url('https://www.tripsavvy.com/thmb/-P6SntHznvukqlm7YsUQlsw41Jc=/3217x2120/filters:no_upscale():max_bytes(150000):strip_icc()/GettyImages-148864437-5ae5850a8e1b6e003704971f.jpg');"></div>
+                    <div class="destination-info">
+                        <h3>Manali, India</h3>
+                        <p>Mountains, trekking & adventure sports</p>
+                        <span class="price-tag">From ₹10,000/person</span>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <div class="destination-img" style="background-image: url('https://www.travelandleisure.com/thmb/P67PtX_g34q6mojlfa5405HdLuw=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/TAL-city-palace-TODOJAIPUR1023-767324cae1a9491696d6a53a96ffc085.jpg');"></div>
+                    <div class="destination-info">
+                        <h3>Jaipur, India</h3>
+                        <p>Forts, palaces & royal heritage</p>
+                        <span class="price-tag">From ₹7,000/person</span>
+                    </div>
+                </div>
+                <div class="destination-card">
+                    <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400');"></div>
+                    <div class="destination-info">
+                        <h3>Rishikesh, India</h3>
+                        <p>Yoga, rafting & spiritual retreat</p>
+                        <span class="price-tag">From ₹6,000/person</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 TravelBuddy - AI Travel Planner for Students. All rights reserved.</p>
+    </footer>
+
+    <!-- Authentication Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            
+            <!-- Email Step -->
+            <div id="emailStep">
+                <h2>Login to Book</h2>
+                <p>Enter your email to receive OTP</p>
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="student@example.com" required>
+                </div>
+                <button class="auth-btn" onclick="sendOTP()">Send OTP</button>
+            </div>
+
+            <!-- OTP Step -->
+            <div id="otpStep" style="display: none;">
+                <h2>Enter OTP</h2>
+                <p>We sent a 6-digit code to your email</p>
+                <div class="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" id="otp1">
+                    <input type="text" class="otp-input" maxlength="1" id="otp2">
+                    <input type="text" class="otp-input" maxlength="1" id="otp3">
+                    <input type="text" class="otp-input" maxlength="1" id="otp4">
+                    <input type="text" class="otp-input" maxlength="1" id="otp5">
+                    <input type="text" class="otp-input" maxlength="1" id="otp6">
+                </div>
+                <button class="auth-btn" onclick="verifyOTP()">Verify OTP</button>
+                <p style="text-align: center; margin-top: 1rem; color: #666;">
+                    Didn't receive? <a href="#" onclick="sendOTP()" style="color: #06b6d4;">Resend OTP</a>
+                </p>
+            </div>
+
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage">
+                <h2 style="color: #4CAF50;">✓ Login Successful!</h2>
+                <p>You can now book your trip</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
