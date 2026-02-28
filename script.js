@@ -9,7 +9,6 @@ function removeAuthToken() { localStorage.removeItem('authToken'); }
 // -------------------- DOM Loaded --------------------
 window.addEventListener('DOMContentLoaded', () => {
 
-    // Trip Form Submission
     const tripForm = document.getElementById('tripForm');
     if (tripForm) {
         tripForm.addEventListener('submit', async (e) => {
@@ -31,7 +30,7 @@ window.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
 
             try {
-                const res = await fetch(`${window.API_BASE_URL}/generate-trip`, {
+                const res = await fetch(`${window.API_BASE_URL}/api/generate-trip`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json', 
@@ -45,10 +44,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 try { data = JSON.parse(text); } 
                 catch(e){ console.error('Invalid JSON:', text); alert(`Server error: ${res.status}`); return; }
 
-                if(res.status === 405){ alert('Method Not Allowed'); return; }
-                if(!res.ok){ alert(`Server error: ${res.status} ${data.message||''}`); return; }
-
-                if(data.success) displayTripPlan(data.trip);
+                if(res.status === 405){ alert('Method Not Allowed on backend'); return; }
+                if(data.success) displayTripPlan(data.trip); 
                 else alert(data.message || 'Failed to generate trip');
 
             } catch(e){ console.error(e); alert('Network or server error'); }
@@ -56,14 +53,14 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // OTP Buttons
+    // -------------------- OTP Login --------------------
     const sendOTPBtn = document.getElementById('sendOTPBtn');
     const verifyOTPBtn = document.getElementById('verifyOTPBtn');
     if(sendOTPBtn) sendOTPBtn.onclick = sendOTP;
     if(verifyOTPBtn) verifyOTPBtn.onclick = verifyOTP;
 
-    // OTP Auto-focus
-    document.querySelectorAll('.otp-input').forEach((input,index,inputs)=>{
+    // -------------------- OTP Auto-focus --------------------
+    document.querySelectorAll('.otp-input').forEach((input, index, inputs)=>{
         input.addEventListener('input', ()=>{
             input.value = input.value.replace(/[^0-9]/g,'');
             if(input.value.length===1 && index<inputs.length-1) inputs[index+1].focus();
@@ -73,7 +70,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Smooth Scroll
+    // -------------------- Smooth Scroll --------------------
     document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
         anchor.addEventListener('click', e=>{
             const href = anchor.getAttribute('href');
@@ -84,14 +81,14 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Modal Outside Click
+    // -------------------- Modal Close on Outside Click --------------------
     const authModal = document.getElementById('authModal');
     if(authModal) authModal.addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
 
-    // Check Existing Login
+    // -------------------- Check Existing Login --------------------
     const token = getAuthToken();
     if(token){
-        fetch(`${window.API_BASE_URL}/health`, { headers:{'Authorization':`Bearer ${token}`} })
+        fetch(`${window.API_BASE_URL}/api/health`, { headers:{'Authorization':`Bearer ${token}`} })
             .then(res=> res.ok ? updateUIForLoggedIn('User') : removeAuthToken())
             .catch(()=>{});
     }
@@ -130,25 +127,16 @@ function clearOTPInputs(){ for(let i=1;i<=6;i++) document.getElementById('otp'+i
 async function sendOTP(){
     const email = document.getElementById('loginEmail').value; if(!email) return alert('Enter email');
     try{
-        const res = await fetch(`${window.API_BASE_URL}/send-otp`, {
+        const res = await fetch(`${window.API_BASE_URL}/api/send-otp`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({email})
         });
-
         const text = await res.text();
-        let data;
-        try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
-
-        if(res.status===405){ alert('Method Not Allowed'); return; }
-        if(!res.ok){ alert(`Server error: ${res.status} ${data.message||''}`); return; }
-
-        if(data.success){ 
-            document.getElementById('emailStep').style.display='none';
-            document.getElementById('otpStep').style.display='block';
-            document.getElementById('otp1').focus();
-        } else alert(data.message||'Failed to send OTP');
-
+        let data; try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
+        if(res.status===405){ alert('Method Not Allowed on backend'); return; }
+        if(data.success){ document.getElementById('emailStep').style.display='none'; document.getElementById('otpStep').style.display='block'; document.getElementById('otp1').focus(); }
+        else alert(data.message||'Failed to send OTP');
     } catch(e){ console.error('Error sending OTP', e); alert('Network/server error'); }
 }
 
@@ -157,28 +145,16 @@ async function verifyOTP(){
     const otp = Array.from({length:6},(_,i)=>document.getElementById('otp'+(i+1)).value).join('');
     if(otp.length!==6) return alert('Enter complete OTP');
     try{
-        const res = await fetch(`${window.API_BASE_URL}/verify-otp`, {
+        const res = await fetch(`${window.API_BASE_URL}/api/verify-otp`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({email,otp})
         });
-
         const text = await res.text();
-        let data;
-        try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
-
-        if(res.status===405){ alert('Method Not Allowed'); return; }
-        if(!res.ok){ alert(`Server error: ${res.status} ${data.message||''}`); return; }
-
-        if(data.success){ 
-            setAuthToken(data.token);
-            updateUIForLoggedIn(email);
-            setTimeout(closeModal,2000);
-        } else { 
-            alert(data.message||'Invalid OTP'); 
-            clearOTPInputs(); 
-            document.getElementById('otp1').focus(); 
-        }
+        let data; try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
+        if(res.status===405){ alert('Method Not Allowed on backend'); return; }
+        if(data.success){ setAuthToken(data.token); updateUIForLoggedIn(email); setTimeout(closeModal,2000); }
+        else { alert(data.message||'Invalid OTP'); clearOTPInputs(); document.getElementById('otp1').focus(); }
     } catch(e){ console.error('Error verifying OTP', e); alert('Network/server error'); }
 }
 
