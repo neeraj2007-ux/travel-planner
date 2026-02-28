@@ -1,8 +1,6 @@
-// API Base URL is defined in config.js
-
-
 // -------------------- Backend & Supabase --------------------
 console.log('Backend URL:', window.API_BASE_URL);
+
 // -------------------- Auth Token Helpers --------------------
 function getAuthToken() {
     return localStorage.getItem('authToken');
@@ -19,7 +17,7 @@ function removeAuthToken() {
 // -------------------- DOM Loaded --------------------
 window.addEventListener('DOMContentLoaded', () => {
 
-    console.log('Backend URL:', API_BASE_URL);
+    console.log('Backend URL:', window.API_BASE_URL);
 
     // -------------------- Trip Form Submission --------------------
     const tripForm = document.getElementById('tripForm');
@@ -49,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/generate-trip`, {
+                const response = await fetch(`${window.API_BASE_URL}/generate-trip`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,7 +56,22 @@ window.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(formData)
                 });
 
-                const data = await response.json();
+                // Safe JSON parsing
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    console.error('Server returned invalid JSON:', text);
+                    alert(`Server error: ${response.status} ${response.statusText}`);
+                    return;
+                }
+
+                if (response.status === 405) {
+                    alert('Method Not Allowed: The backend endpoint does not accept POST. Check backend configuration.');
+                    return;
+                }
+
                 console.log('API Response:', data);
 
                 if (data.success) displayTripPlan(data.trip);
@@ -114,7 +127,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // -------------------- Check Existing Login --------------------
     const token = getAuthToken();
     if (token) {
-        fetch(`${API_BASE_URL}/health`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${window.API_BASE_URL}/health`, { headers: { 'Authorization': `Bearer ${token}` } })
             .then(res => res.ok ? updateUIForLoggedIn('User') : removeAuthToken())
             .catch(() => {});
     }
@@ -166,35 +179,60 @@ function clearOTPInputs() { for(let i=1;i<=6;i++){document.getElementById('otp'+
 async function sendOTP() {
     const email = document.getElementById('loginEmail').value;
     if (!email) return alert('Enter email');
+
     try {
-        const res = await fetch(`${API_BASE_URL}/send-otp`, {
+        const res = await fetch(`${window.API_BASE_URL}/send-otp`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({email})
         });
-        const data = await res.json();
-        if (data.success) {
+
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } 
+        catch(e){ console.error('Server returned invalid JSON:', text); alert(`Server error: ${res.status} ${res.statusText}`); return; }
+
+        if(res.status === 405){ alert('Method Not Allowed: backend does not accept POST'); return; }
+
+        if(data.success){
             document.getElementById('emailStep').style.display='none';
             document.getElementById('otpStep').style.display='block';
             document.getElementById('otp1').focus();
         } else alert(data.message || 'Failed to send OTP');
-    } catch(e) { console.error(e); alert('Error sending OTP'); }
+
+    } catch(e){ console.error('Error sending OTP:', e); alert('Network or server error'); }
 }
 
 async function verifyOTP() {
     const email = document.getElementById('loginEmail').value;
     const otp = Array.from({length:6},(_,i)=>document.getElementById('otp'+(i+1)).value).join('');
-    if (otp.length!==6) return alert('Enter complete OTP');
+    if(otp.length!==6) return alert('Enter complete OTP');
+
     try {
-        const res = await fetch(`${API_BASE_URL}/verify-otp`, {
+        const res = await fetch(`${window.API_BASE_URL}/verify-otp`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({email,otp})
         });
-        const data = await res.json();
-        if (data.success) { setAuthToken(data.token); updateUIForLoggedIn(email); setTimeout(closeModal,2000); }
-        else { alert(data.message || 'Invalid OTP'); clearOTPInputs(); document.getElementById('otp1').focus(); }
-    } catch(e) { console.error(e); alert('Error verifying OTP'); }
+
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } 
+        catch(e){ console.error('Server returned invalid JSON:', text); alert(`Server error: ${res.status} ${res.statusText}`); return; }
+
+        if(res.status === 405){ alert('Method Not Allowed: backend does not accept POST'); return; }
+
+        if(data.success){
+            setAuthToken(data.token);
+            updateUIForLoggedIn(email);
+            setTimeout(closeModal,2000);
+        } else {
+            alert(data.message || 'Invalid OTP');
+            clearOTPInputs();
+            document.getElementById('otp1').focus();
+        }
+
+    } catch(e){ console.error('Error verifying OTP:', e); alert('Network or server error'); }
 }
 
 // -------------------- UI Updates --------------------
