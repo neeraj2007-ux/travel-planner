@@ -15,7 +15,7 @@ from ai_service import AIService
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='../frontend')
-CORS(app)  # In production, restrict origins: origins=["https://your-frontend.com"]
+CORS(app, origins=["https://neeraj2007-ux.github.io"], supports_credentials=True) # In production, restrict origins: origins=["https://your-frontend.com"]
 
 # Load configuration
 app.config.from_object(Config)
