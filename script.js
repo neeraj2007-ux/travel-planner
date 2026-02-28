@@ -1,19 +1,26 @@
-
-// -------------------- Backend & Global Config --------------------
-console.log('Backend URL:', window.API_BASE_URL);
-
-// -------------------- Auth Token Helpers --------------------
+// -------------------- Helpers --------------------
 function getAuthToken() { return localStorage.getItem('authToken'); }
 function setAuthToken(token) { localStorage.setItem('authToken', token); }
 function removeAuthToken() { localStorage.removeItem('authToken'); }
 
-// -------------------- DOM Loaded --------------------
+// -------------------- Event Listeners --------------------
 window.addEventListener('DOMContentLoaded', () => {
+    
+    // Check Login Status
+    const token = getAuthToken();
+    if(token) updateUIForLoggedIn('User');
 
+    // Handle Form Submit
     const tripForm = document.getElementById('tripForm');
     if (tripForm) {
         tripForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if (!getAuthToken()) { alert('Please login first!'); openModal(); return; }
+
+            const submitBtn = document.querySelector('.generate-btn');
+            submitBtn.textContent = 'Generating Plan... (Takes ~10s)';
+            submitBtn.disabled = true;
+
             const formData = {
                 destination: document.getElementById('destination').value,
                 budget: document.getElementById('budget').value,
@@ -23,150 +30,198 @@ window.addEventListener('DOMContentLoaded', () => {
                 accommodation: document.getElementById('accommodation').value,
                 interests: document.getElementById('interests').value
             };
-            const token = getAuthToken();
-            if (!token) { alert('Please login!'); openModal(); return; }
-
-            const submitBtn = document.querySelector('.generate-btn');
-            submitBtn.textContent = 'Generating...';
-            submitBtn.disabled = true;
 
             try {
                 const res = await fetch(`${window.API_BASE_URL}/api/generate-trip`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json', 
-                        'Authorization': `Bearer ${token}` 
+                        'Authorization': `Bearer ${getAuthToken()}` 
                     },
                     body: JSON.stringify(formData)
                 });
-
-                const text = await res.text();
-                let data;
-                try { data = JSON.parse(text); } 
-                catch(e){ console.error('Invalid JSON:', text); alert(`Server error: ${res.status}`); return; }
-
-                if(res.status === 405){ alert('Method Not Allowed on backend'); return; }
-                if(data.success) displayTripPlan(data.trip); 
-                else alert(data.message || 'Failed to generate trip');
-
-            } catch(e){ console.error(e); alert('Network or server error'); }
-            finally { submitBtn.textContent = 'Generate Trip Plan'; submitBtn.disabled = false; }
+                
+                const data = await res.json();
+                if(data.success) {
+                    displayTripPlan(data.trip);
+                } else {
+                    alert(data.message || 'Error generating trip');
+                }
+            } catch(e) {
+                console.error(e);
+                alert('Connection error. Is backend running?');
+            } finally {
+                submitBtn.textContent = 'Generate Trip Plan';
+                submitBtn.disabled = false;
+            }
         });
     }
 
-    // -------------------- OTP Login --------------------
-    const sendOTPBtn = document.getElementById('sendOTPBtn');
-    const verifyOTPBtn = document.getElementById('verifyOTPBtn');
-    if(sendOTPBtn) sendOTPBtn.onclick = sendOTP;
-    if(verifyOTPBtn) verifyOTPBtn.onclick = verifyOTP;
-
-    // -------------------- OTP Auto-focus --------------------
-    document.querySelectorAll('.otp-input').forEach((input, index, inputs)=>{
-        input.addEventListener('input', ()=>{
-            input.value = input.value.replace(/[^0-9]/g,'');
-            if(input.value.length===1 && index<inputs.length-1) inputs[index+1].focus();
-        });
-        input.addEventListener('keydown', e=>{
-            if(e.key==='Backspace' && input.value==='' && index>0) inputs[index-1].focus();
+    // OTP Inputs
+    document.querySelectorAll('.otp-input').forEach((input, idx, inputs) => {
+        input.addEventListener('input', () => {
+            if(input.value.length === 1 && idx < inputs.length - 1) inputs[idx+1].focus();
         });
     });
-
-    // -------------------- Smooth Scroll --------------------
-    document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
-        anchor.addEventListener('click', e=>{
-            const href = anchor.getAttribute('href');
-            if(href==='#') return;
-            e.preventDefault();
-            const target = document.querySelector(href);
-            if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-        });
-    });
-
-    // -------------------- Modal Close on Outside Click --------------------
-    const authModal = document.getElementById('authModal');
-    if(authModal) authModal.addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
-
-    // -------------------- Check Existing Login --------------------
-    const token = getAuthToken();
-    if(token){
-        fetch(`${window.API_BASE_URL}/api/health`, { headers:{'Authorization':`Bearer ${token}`} })
-            .then(res=> res.ok ? updateUIForLoggedIn('User') : removeAuthToken())
-            .catch(()=>{});
-    }
 });
 
-// -------------------- Display Trip Plan --------------------
-function displayTripPlan(trip){
-    const existing = document.getElementById('tripPlanResult'); if(existing) existing.remove();
-    const card = document.querySelector('.planner-card'); if(!card) return;
-    let html = `<div id="tripPlanResult" style="background:white;padding:20px;border-radius:15px;margin-top:20px;">`;
-    html += `<h2 style="color:#06b6d4;">Your Trip to ${trip.destination}</h2>`;
-    html += `<p>Budget: ₹${trip.budget} | Days: ${trip.days} | Travelers: ${trip.members}</p>`;
-    if(trip.itinerary) trip.itinerary.forEach(day=>{
-        html += `<h4>${day.title}</h4>`;
-        if(day.activities){ html+='<ul>'; day.activities.forEach(a=>html+=`<li>${a.name||a}</li>`); html+='</ul>'; }
-    });
-    html += `<button onclick="window.print()" style="margin-top:10px;">Print</button>`;
-    html += `<button onclick="document.getElementById('tripPlanResult').remove()" style="margin-top:10px;">Close</button>`;
-    html += `</div>`;
-    card.insertAdjacentHTML('afterend', html);
-    document.getElementById('tripPlanResult').scrollIntoView({behavior:'smooth'});
-}
+// -------------------- Core Functions --------------------
 
-// -------------------- Modal & OTP --------------------
-function openModal(){ document.getElementById('authModal').classList.add('active'); }
-function closeModal(){ document.getElementById('authModal').classList.remove('active'); resetModal(); }
-function resetModal(){
-    document.getElementById('emailStep').style.display='block';
-    document.getElementById('otpStep').style.display='none';
-    document.getElementById('successMessage').style.display='none';
-    document.getElementById('loginEmail').value='';
-    clearOTPInputs();
-}
-function clearOTPInputs(){ for(let i=1;i<=6;i++) document.getElementById('otp'+i).value=''; }
+function displayTripPlan(trip) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = ''; // Clear previous
 
-async function sendOTP(){
-    const email = document.getElementById('loginEmail').value; if(!email) return alert('Enter email');
-    try{
-        const res = await fetch(`${window.API_BASE_URL}/api/send-otp`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({email})
+    let html = `
+        <div class="trip-result-card" style="background:white; padding:2rem; border-radius:15px; margin-top:2rem; box-shadow:0 5px 20px rgba(0,0,0,0.1);">
+            <h2 style="color:#06b6d4;">Trip to ${trip.destination}</h2>
+            <div style="margin-bottom:1rem; padding:1rem; background:#f0f9ff; border-radius:10px;">
+                <strong>Budget:</strong> ₹${trip.budget} | <strong>Travelers:</strong> ${trip.members} | <strong>Days:</strong> ${trip.days}
+            </div>
+            <h3>Itinerary</h3>
+            <div class="timeline">
+    `;
+
+    if(trip.itinerary && Array.isArray(trip.itinerary)) {
+        trip.itinerary.forEach(day => {
+            html += `
+                <div class="day-plan" style="margin-bottom:1.5rem;">
+                    <h4 style="color:#333; border-bottom:2px solid #06b6d4; display:inline-block;">Day ${day.day}: ${day.title || ''}</h4>
+                    <ul style="list-style:none; padding-left:0; margin-top:10px;">
+            `;
+            
+            if(day.activities) {
+                day.activities.forEach(act => {
+                    // FIXED: Handle various JSON keys the AI might return
+                    const name = act.activity || act.name || act.description;
+                    const time = act.time ? `<span style="color:#666; font-size:0.9em;">${act.time}</span> - ` : '';
+                    const cost = act.cost ? ` <span style="color:#059669; font-weight:bold;">(₹${act.cost})</span>` : '';
+                    
+                    html += `<li style="margin-bottom:8px; padding-left:15px; border-left:3px solid #e0e0e0;">
+                        ${time}<strong>${name}</strong>${cost}
+                        <div style="font-size:0.9em; color:#666;">${act.tips || act.description || ''}</div>
+                    </li>`;
+                });
+            }
+            html += `</ul></div>`;
         });
-        const text = await res.text();
-        let data; try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
-        if(res.status===405){ alert('Method Not Allowed on backend'); return; }
-        if(data.success){ document.getElementById('emailStep').style.display='none'; document.getElementById('otpStep').style.display='block'; document.getElementById('otp1').focus(); }
-        else alert(data.message||'Failed to send OTP');
-    } catch(e){ console.error('Error sending OTP', e); alert('Network/server error'); }
+    } else {
+        html += `<p>No itinerary details available.</p>`;
+    }
+
+    html += `
+        <button onclick="window.print()" class="generate-btn" style="width:auto; margin-top:1rem;">Print / Save PDF</button>
+        </div>
+    `;
+
+    resultsDiv.innerHTML = html;
+    resultsDiv.scrollIntoView({behavior: 'smooth'});
 }
 
-async function verifyOTP(){
+// FIXED: Missing function implemented
+async function fetchPastTrips() {
+    if (!getAuthToken()) { alert('Login required'); openModal(); return; }
+    
+    try {
+        const res = await fetch(`${window.API_BASE_URL}/api/my-trips`, {
+            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+        });
+        const data = await res.json();
+        
+        if(data.success) {
+            const resultsDiv = document.getElementById('results');
+            if(data.trips.length === 0) {
+                alert('No past trips found.');
+                return;
+            }
+            
+            let html = `<h2 style="margin-top:2rem;">My Past Trips</h2><div style="display:grid; gap:1rem; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));">`;
+            data.trips.forEach(t => {
+                html += `
+                    <div style="background:white; padding:1.5rem; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                        <h3 style="color:#06b6d4;">${t.destination}</h3>
+                        <p>₹${t.budget} for ${t.days} days</p>
+                        <button onclick='displayTripPlan(${JSON.stringify(t)})' style="background:#06b6d4; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-top:10px;">View Plan</button>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            resultsDiv.innerHTML = html;
+            resultsDiv.scrollIntoView({behavior:'smooth'});
+        }
+    } catch(e) {
+        console.error(e);
+        alert('Failed to fetch history');
+    }
+}
+
+// FIXED: Missing function implemented
+function showPopularTrip(location) {
+    document.getElementById('destination').value = location.charAt(0).toUpperCase() + location.slice(1);
+    document.getElementById('budget').value = 15000;
+    document.getElementById('members').value = 4;
+    document.getElementById('days').value = 5;
+    document.getElementById('from').value = 'Delhi'; // Default
+    document.getElementById('planner').scrollIntoView({behavior:'smooth'});
+}
+
+// -------------------- Auth Logic --------------------
+
+function openModal() { document.getElementById('authModal').classList.add('active'); }
+function closeModal() { document.getElementById('authModal').classList.remove('active'); }
+
+async function sendOTP() {
     const email = document.getElementById('loginEmail').value;
-    const otp = Array.from({length:6},(_,i)=>document.getElementById('otp'+(i+1)).value).join('');
-    if(otp.length!==6) return alert('Enter complete OTP');
-    try{
-        const res = await fetch(`${window.API_BASE_URL}/api/verify-otp`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({email,otp})
+    if(!email) return alert('Email required');
+    
+    document.getElementById('sendOTPBtn').innerText = 'Sending...';
+    
+    try {
+        const res = await fetch(`${window.API_BASE_URL}/api/send-otp`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email})
         });
-        const text = await res.text();
-        let data; try{ data=JSON.parse(text); } catch(e){ console.error('Invalid JSON', text); alert(`Server error: ${res.status}`); return; }
-        if(res.status===405){ alert('Method Not Allowed on backend'); return; }
-        if(data.success){ setAuthToken(data.token); updateUIForLoggedIn(email); setTimeout(closeModal,2000); }
-        else { alert(data.message||'Invalid OTP'); clearOTPInputs(); document.getElementById('otp1').focus(); }
-    } catch(e){ console.error('Error verifying OTP', e); alert('Network/server error'); }
+        const data = await res.json();
+        if(data.success) {
+            document.getElementById('emailStep').style.display = 'none';
+            document.getElementById('otpStep').style.display = 'block';
+        } else {
+            alert(data.message);
+        }
+    } catch(e) { alert('Error sending OTP'); }
+    finally { document.getElementById('sendOTPBtn').innerText = 'Send OTP'; }
 }
 
-// -------------------- UI Updates --------------------
-function updateUIForLoggedIn(email){
-    const btn = document.querySelector('.login-btn');
-    btn.textContent = email.split('@')[0];
-    btn.onclick = ()=>{ if(confirm('Logout?')) logout(); };
+async function verifyOTP() {
+    const email = document.getElementById('loginEmail').value;
+    const otp = Array.from(document.querySelectorAll('.otp-input')).map(i => i.value).join('');
+    
+    try {
+        const res = await fetch(`${window.API_BASE_URL}/api/verify-otp`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, otp})
+        });
+        const data = await res.json();
+        if(data.success) {
+            setAuthToken(data.token);
+            updateUIForLoggedIn(email);
+            closeModal();
+            alert('Login Successful!');
+        } else {
+            alert('Invalid OTP');
+        }
+    } catch(e) { alert('Verify failed'); }
 }
-function updateUIForLoggedOut(){
+
+function updateUIForLoggedIn(email) {
     const btn = document.querySelector('.login-btn');
-    btn.textContent='Login'; btn.onclick=openModal;
+    btn.textContent = 'Logout (' + email.split('@')[0] + ')';
+    btn.onclick = (e) => {
+        e.preventDefault();
+        if(confirm('Logout?')) {
+            removeAuthToken();
+            window.location.reload();
+        }
+    };
 }
-function logout(){ removeAuthToken(); updateUIForLoggedOut(); alert('Logged out successfully'); }
