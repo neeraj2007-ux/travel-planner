@@ -1,20 +1,4 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
-
-# ------------------ CORS Setup ------------------
-origins = [
-    "https://neeraj2007-ux.github.io"  # your frontend
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 // -------------------- Backend & Global Config --------------------
 console.log('Backend URL:', window.API_BASE_URL);
 
