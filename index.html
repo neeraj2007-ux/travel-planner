@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TravelBuddy - AI Planner</title>
+    <title>TravelBuddy AI</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Load config first, then script -->
     <script src="config.js"></script>
     <script src="script.js" defer></script>
 </head>
@@ -23,26 +22,26 @@
 
     <section class="hero" id="home">
         <h1>Plan Your Dream Trip Within Budget</h1>
-        <p>AI-powered itineraries for students.</p>
+        <p>Smart AI-powered travel planning for students</p>
     </section>
 
     <div class="container">
         <div class="planner-card" id="planner">
-            <h2>🌍 Trip Planner</h2>
+            <h2>🌍 Plan Your Trip</h2>
             <form id="tripForm">
                 <div class="form-row">
                     <div class="form-group">
                         <label>Destination</label>
-                        <input type="text" id="destination" required placeholder="e.g. Goa">
+                        <input type="text" id="destination" placeholder="Goa, Manali..." required>
                     </div>
                     <div class="form-group">
                         <label>Budget (₹)</label>
-                        <input type="number" id="budget" required min="1000">
+                        <input type="number" id="budget" placeholder="10000" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Travelers</label>
+                        <label>Members</label>
                         <input type="number" id="members" value="1" min="1">
                     </div>
                     <div class="form-group">
@@ -52,14 +51,14 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Start From</label>
-                        <input type="text" id="from" required placeholder="e.g. Mumbai">
+                        <label>Starting From</label>
+                        <input type="text" id="from" placeholder="Your City" required>
                     </div>
                     <div class="form-group">
                         <label>Stay Type</label>
                         <select id="accommodation">
                             <option value="hostel">Hostel</option>
-                            <option value="hotel">Budget Hotel</option>
+                            <option value="budget hotel">Budget Hotel</option>
                         </select>
                     </div>
                 </div>
@@ -67,54 +66,78 @@
                     <label>Interests</label>
                     <select id="interests">
                         <option value="adventure">Adventure</option>
-                        <option value="chill">Relaxation</option>
-                        <option value="culture">Culture</option>
+                        <option value="nature">Nature</option>
+                        <option value="party">Party</option>
                     </select>
                 </div>
                 <button type="submit" class="generate-btn">Generate Trip Plan</button>
             </form>
-            <div style="text-align:center; margin-top:10px;">
-                <button onclick="fetchPastTrips()" style="background:none; border:none; color:#06b6d4; cursor:pointer; text-decoration:underline;">View My Past Trips</button>
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="fetchPastTrips()" style="background:none; border:none; color:#06b6d4; cursor:pointer;">View My Past Trips</button>
             </div>
         </div>
 
-        <div class="destinations">
-            <h2>Popular Now</h2>
-            <div class="destination-grid">
-                <div class="destination-card" onclick="showPopularTrip('goa')">
-                    <div class="destination-info"><h3>Goa</h3><span class="price-tag">₹8k+</span></div>
-                </div>
-                <div class="destination-card" onclick="showPopularTrip('manali')">
-                    <div class="destination-info"><h3>Manali</h3><span class="price-tag">₹10k+</span></div>
-                </div>
+        <!-- Popular Destinations Section -->
+<div class="destinations" id="destinations">
+    <h2>Popular Student Destinations</h2>
+    <div class="destination-grid">
+        
+        <!-- Goa Card -->
+        <div class="destination-card" onclick="showPopularTrip('goa')">
+            <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=500&q=80');"></div>
+            <div class="destination-info">
+                <h3>Goa, India</h3>
+                <p>Beaches, nightlife & Portuguese culture</p>
+                <span class="price-tag">From ₹8,000/person</span>
             </div>
         </div>
 
-        <div id="results"></div>
+        <!-- Manali Card -->
+        <div class="destination-card" onclick="showPopularTrip('manali')">
+            <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=500&q=80');"></div>
+            <div class="destination-info">
+                <h3>Manali, India</h3>
+                <p>Mountains, trekking & adventure</p>
+                <span class="price-tag">From ₹10,000/person</span>
+            </div>
+        </div>
+
+        <!-- Jaipur Card -->
+        <div class="destination-card" onclick="showPopularTrip('jaipur')">
+            <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1477587458883-47145ed94245?w=500&q=80');"></div>
+            <div class="destination-info">
+                <h3>Jaipur, India</h3>
+                <p>Forts, palaces & royal heritage</p>
+                <span class="price-tag">From ₹7,000/person</span>
+            </div>
+        </div>
+
+        <!-- Rishikesh Card -->
+        <div class="destination-card" onclick="showPopularTrip('rishikesh')">
+            <div class="destination-img" style="background-image: url('https://images.unsplash.com/photo-1588416936097-41850ab3d86d?w=500&q=80');"></div>
+            <div class="destination-info">
+                <h3>Rishikesh, India</h3>
+                <p>Yoga, rafting & spiritual retreat</p>
+                <span class="price-tag">From ₹6,000/person</span>
+            </div>
+        </div>
+
     </div>
+</div>
 
     <!-- Auth Modal -->
     <div class="modal" id="authModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            
             <div id="emailStep">
                 <h2>Login</h2>
-                <div class="form-group">
-                    <input type="email" id="loginEmail" placeholder="Enter Email" required>
-                </div>
+                <input type="email" id="loginEmail" placeholder="Enter Email" style="width:100%; padding:10px; margin:10px 0;">
                 <button id="sendOTPBtn" class="auth-btn" onclick="sendOTP()">Send OTP</button>
             </div>
-
             <div id="otpStep" style="display:none;">
                 <h2>Enter OTP</h2>
                 <div class="otp-inputs">
-                    <input type="text" class="otp-input" maxlength="1">
-                    <input type="text" class="otp-input" maxlength="1">
-                    <input type="text" class="otp-input" maxlength="1">
-                    <input type="text" class="otp-input" maxlength="1">
-                    <input type="text" class="otp-input" maxlength="1">
-                    <input type="text" class="otp-input" maxlength="1">
+                    <input class="otp-input" type="text" maxlength="1"><input class="otp-input" type="text" maxlength="1"><input class="otp-input" type="text" maxlength="1"><input class="otp-input" type="text" maxlength="1"><input class="otp-input" type="text" maxlength="1"><input class="otp-input" type="text" maxlength="1">
                 </div>
                 <button class="auth-btn" onclick="verifyOTP()">Verify</button>
             </div>
