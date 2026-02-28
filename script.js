@@ -2,7 +2,7 @@
 
 
 // -------------------- Backend & Supabase --------------------
-console.log('Backend URL:', API_BASE_URL);
+console.log('Backend URL:', window.API_BASE_URL);
 // -------------------- Auth Token Helpers --------------------
 function getAuthToken() {
     return localStorage.getItem('authToken');
