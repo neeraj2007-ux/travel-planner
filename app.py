@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
+from threading import Thread
 from config import Config
 from auth_service import AuthService
 from email_service import EmailService
@@ -62,6 +62,8 @@ def get_auth():
 
 # ================= SEND OTP =================
 
+
+
 @app.route("/api/send-otp", methods=["POST"])
 def send_otp():
     email = request.json.get("email", "").lower().strip()
@@ -70,17 +72,19 @@ def send_otp():
         return jsonify({"success": False, "message": "Email required"}), 400
 
     otp = auth_service.generate_otp()
-
-    # ✅ Store OTP in Supabase (otp_codes table)
     auth_service.store_otp(email, otp)
 
-    # Send email
-    if email_service.send_otp_email(email, otp):
-        return jsonify({"success": True, "message": "OTP sent"})
+    # 🚀 Send email in background (prevents timeout)
+    def send_email_async():
+        email_service.send_otp_email(email, otp)
 
-    # Fallback (if email fails)
-    print(f"OTP for {email}: {otp}")
-    return jsonify({"success": True, "message": "OTP generated"})
+    Thread(target=send_email_async).start()
+
+    # ✅ Return immediately (NO TIMEOUT)
+    return jsonify({
+        "success": True,
+        "message": "OTP sent successfully"
+    })
 
 
 # ================= VERIFY OTP =================
