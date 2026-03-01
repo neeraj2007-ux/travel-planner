@@ -14,8 +14,15 @@ from ai_service import AIService
 app = Flask(__name__)
 app.config.from_object(Config)
 
-# Allow GitHub Pages frontend to access API
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(
+    app,
+    supports_credentials=True,
+    origins=[
+        "https://neeraj2007-ux.github.io",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500"
+    ]
+)
 
 
 # ================= SERVICES =================
