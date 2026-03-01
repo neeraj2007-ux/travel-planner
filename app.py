@@ -91,16 +91,21 @@ def send_otp():
 
 @app.route("/api/verify-otp", methods=["POST"])
 def verify_otp():
-    data = request.json
+    try:
+        data = request.json
+        email = data.get("email", "").lower().strip()
+        otp = data.get("otp", "").strip()
 
-    email = data.get("email", "").lower().strip()
-    otp = data.get("otp", "").strip()
+        if not email or not otp:
+            return jsonify({"success": False, "message": "Missing data"}), 400
 
-    success, msg = auth_service.verify_otp(email, otp)
+        success, msg = auth_service.verify_otp(email, otp)
 
-    if success:
+        if not success:
+            return jsonify({"success": False, "message": msg}), 400
+
+        # Create user if not exists
         user = db_service.get_user_by_email(email)
-
         if not user:
             db_service.create_user(email)
 
@@ -112,7 +117,9 @@ def verify_otp():
             "user": {"email": email}
         })
 
-    return jsonify({"success": False, "message": msg}), 400
+    except Exception as e:
+        print("❌ VERIFY OTP ERROR:", str(e))
+        return jsonify({"success": False, "message": "Server error"}), 500
 
 
 # ================= GENERATE TRIP =================
