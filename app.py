@@ -64,64 +64,50 @@ def get_auth():
 
 
 
-@app.route("/api/send-otp", methods=["POST"])
+@app.route('/api/send-otp', methods=['POST'])
 def send_otp():
-    email = request.json.get("email", "").lower().strip()
+    try:
+        data = request.get_json()
+        email = data.get('email')
 
-    if not email:
-        return jsonify({"success": False, "message": "Email required"}), 400
+        if not email:
+            return jsonify({"success": False, "message": "Email required"}), 400
 
-    otp = auth_service.generate_otp()
-    auth_service.store_otp(email, otp)
+        otp = auth_service.generate_otp(email)
 
-    # 🚀 Send email in background (prevents timeout)
-    def send_email_async():
+        # 🔥 THIS WILL NOT BLOCK WORKER
         email_service.send_otp_email(email, otp)
 
-    Thread(target=send_email_async).start()
+        return jsonify({
+            "success": True,
+            "message": "OTP sent successfully"
+        })
 
-    # ✅ Return immediately (NO TIMEOUT)
-    return jsonify({
-        "success": True,
-        "message": "OTP sent successfully"
-    })
+    except Exception as e:
+        print("OTP ERROR:", e)
+        return jsonify({"success": False}), 500
 
 
 # ================= VERIFY OTP =================
 
-@app.route("/api/verify-otp", methods=["POST"])
+@app.route('/api/verify-otp', methods=['POST'])
 def verify_otp():
-    try:
-        data = request.json
-        email = data.get("email", "").lower().strip()
-        otp = data.get("otp", "").strip()
+    data = request.get_json()
+    email = data.get('email')
+    otp = data.get('otp')
 
-        if not email or not otp:
-            return jsonify({"success": False, "message": "Missing data"}), 400
-
-        success, msg = auth_service.verify_otp(email, otp)
-
-        if not success:
-            return jsonify({"success": False, "message": msg}), 400
-
-        # Create user if not exists
-        user = db_service.get_user_by_email(email)
-        if not user:
-            db_service.create_user(email)
-
-        token = auth_service.generate_jwt_token(email)
+    if auth_service.verify_otp(email, otp):
+        token = auth_service.generate_token(email)
 
         return jsonify({
             "success": True,
-            "token": token,
-            "user": {"email": email}
+            "token": token
         })
 
-    except Exception as e:
-        print("❌ VERIFY OTP ERROR:", str(e))
-        return jsonify({"success": False, "message": "Server error"}), 500
-
-
+    return jsonify({
+        "success": False,
+        "message": "Invalid OTP"
+    }), 401
 # ================= GENERATE TRIP =================
 
 @app.route("/api/generate-trip", methods=["POST"])
